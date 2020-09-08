@@ -1,0 +1,20 @@
+#######################################
+# Syntax Coloring Map For LoRandom
+#######################################
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+setupLoRandom	KEYWORD2
+writeRegister	KEYWORD2
+readRegister	KEYWORD2
+resetLoRa	KEYWORD2
+getLoRandomByte	KEYWORD2
+fillRandom	KEYWORD2
+hexDump	KEYWORD2
+
+RegOpMode	LITERAL1
+RegModemConfig1	LITERAL1
+RegModemConfig2	LITERAL1
+RegRssiWideband	LITERAL1
