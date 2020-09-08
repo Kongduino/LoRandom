@@ -4,10 +4,4 @@ A library using Semtech's sx1276/7/8/9's `RegRssiWideband` register properly to 
 
 This was written for Sandeep Mistry's library, but is easily adaptable to other platforms.
 
-See:
-
-![Generating Random Numbers with LoRandom](LoRandom.png)
-
-vs
-
-![Generating Random Numbers with LoRaClass::random](SandeepRandom.png)
+See [ESP32_Random_Test](https://github.com/Kongduino/ESP32_Random_Test) for an example of how it works.
