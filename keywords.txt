@@ -12,6 +12,7 @@ readRegister	KEYWORD2
 resetLoRa	KEYWORD2
 getLoRandomByte	KEYWORD2
 fillRandom	KEYWORD2
+fillRandomMultiple	KEYWORD2
 hexDump	KEYWORD2
 
 RegOpMode	LITERAL1

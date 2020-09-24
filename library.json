@@ -1,0 +1,21 @@
+{
+  "name": "LoRandom",
+  "keywords": "trng, rng, lora",
+  "description": "A library using Semtech's sx1276/7/8/9's `RegRssiWideband` register properly to generate random numbers. This was written for Sandeep Mistry's library, but is easily adaptable to other platforms. See [this issue](https://github.com/sandeepmistry/arduino-LoRa/issues/394) for context.",
+  "homepage": "https://github.com/Kongduino/LoRandom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kongduino/LoRandom.git"
+  },
+  "version": "1.0.0",
+  "authors": {
+    "name": "Kongduino",
+    "url": "https://kongduino.wordpress.com"
+  },
+  "exclude": [
+    ".github",
+    "extras"
+  ],
+  "frameworks": "arduino",
+  "platforms": "*"
+}
