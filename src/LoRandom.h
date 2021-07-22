@@ -43,11 +43,19 @@ void resetLoRa() {
 }
 
 uint8_t getLoRandomByte() {
+  uint8_t x = (readRegister(RegRssiWideband) & 0b00000001);
+  for (uint8_t j = 0; j < 7; j++) {
+    x = (x << 1) | (readRegister(RegRssiWideband) & 0b00000001);
+  }
+  return x;
+}
+
+uint8_t getLoRandomByteLMIC() {
   uint8_t x = 0;
   for (uint8_t j = 0; j < 8; j++) {
-    x += (readRegister(RegRssiWideband) & 0b00000001);
-    x = x << 1;
-    //delay(1);
+    uint8_t b;
+    while((b = readRegister(RegRssiWideband) & 0x01) == (readRegister(RegRssiWideband) & 0x01));
+    x = (x << 1) | b;
   }
   return x;
 }
@@ -71,6 +79,15 @@ void fillRandom(unsigned char *x, size_t len) {
   size_t i;
   for (i = 0; i < len; i++) {
     x[i] = getLoRandomByte();
+  }
+  resetLoRa();
+}
+
+void fillRandomLMIC(unsigned char *x, size_t len) {
+  setupLoRandom();
+  size_t i;
+  for (i = 0; i < len; i++) {
+    x[i] = getLoRandomByteLMIC();
   }
   resetLoRa();
 }
