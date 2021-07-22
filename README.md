@@ -10,3 +10,4 @@ See [ESP32_Random_Test](https://github.com/Kongduino/ESP32_Random_Test) for an e
 
 There was a bug in `getLoRandomByte()`, whereas only even numbers were returned. This bug was pointed out [here](https://github.com/sandeepmistry/arduino-LoRa/pull/496#issuecomment-882019560), for which I am thankful...
 
+![Fixed](Fixed.png)
