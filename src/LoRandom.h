@@ -121,25 +121,27 @@ void fillRandom(unsigned char *x, size_t len, uint8_t minValue, uint8_t maxValue
 }
 
 void hexDump(unsigned char *buf, uint16_t len) {
-  String s = "|", t = "| |";
-  Serial.println(F("  |.0 .1 .2 .3 .4 .5 .6 .7 .8 .9 .a .b .c .d .e .f |"));
-  Serial.println(F("  +------------------------------------------------+ +----------------+"));
+  char alphabet[17]="0123456789abcdef";
+  Serial.print(F("   +------------------------------------------------+ +----------------+\n"));
+  Serial.print(F("   |.0 .1 .2 .3 .4 .5 .6 .7 .8 .9 .a .b .c .d .e .f | |      ASCII     |\n"));
   for (uint16_t i = 0; i < len; i += 16) {
+    if (i % 128 == 0)
+      Serial.print(F("   +------------------------------------------------+ +----------------+\n"));
+    char s[]="|                                                | |................|\n";
+    uint8_t ix = 1, iy = 52;
     for (uint8_t j = 0; j < 16; j++) {
-      if (i + j >= len) {
-        s = s + "   "; t = t + " ";
-      } else {
-        char c = buf[i + j];
-        if (c < 16) s = s + "0";
-        s = s + String(c, HEX) + " ";
-        if (c < 32 || c > 127) t = t + ".";
-        else t = t + (String(c));
+      if (i + j < len) {
+        uint8_t c = buf[i + j];
+        s[ix++] = alphabet[(c >> 4) & 0x0F];
+        s[ix++] = alphabet[c & 0x0F];
+        ix++;
+        if (c > 31 && c < 128) s[iy++] = c;
       }
     }
     uint8_t index = i / 16;
+    if(i<256) Serial.write(' ');
     Serial.print(index, HEX); Serial.write('.');
-    Serial.println(s + t + "|");
-    s = "|"; t = "| |";
+    Serial.print(s);
   }
-  Serial.println(F("  +------------------------------------------------+ +----------------+"));
+  Serial.print(F("   +------------------------------------------------+ +----------------+\n"));
 }
