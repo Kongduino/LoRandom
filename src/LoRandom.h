@@ -28,34 +28,38 @@ uint8_t modemconf2;
 
 void setupLoRandom() {
   modemconf1 = readRegister(RegModemConfig1);
+  delay(100);
   modemconf2 = readRegister(RegModemConfig2);
+  delay(100);
   writeRegister(RegOpMode, 0b10001101);
+  delay(100);
   // MODE_LONG_RANGE_MODE 0b1xxxxxxx || LowFrequencyModeOn 0bxxxx1xxx || MODE_RX_CONTINUOUS 0bxxxxx101
   writeRegister(RegModemConfig1, 0b01110010);
+  delay(100);
   writeRegister(RegModemConfig2, 0b01110000);
+  delay(100);
 }
 
 void resetLoRa() {
   writeRegister(RegOpMode, 0b10000001);
+  delay(100);
   // MODE_LONG_RANGE_MODE 0b1xxxxxxx || MODE_STDBY 0bxxxxxxx1
   writeRegister(RegModemConfig1, modemconf1);
+  delay(100);
   writeRegister(RegModemConfig2, modemconf2);
+  delay(100);
 }
 
 uint8_t getLoRandomByte() {
-  uint8_t x = (readRegister(RegRssiWideband) & 0b00000001);
-  for (uint8_t j = 0; j < 7; j++) {
-    x = (x << 1) | (readRegister(RegRssiWideband) & 0b00000001);
-  }
-  return x;
-}
-
-uint8_t getLoRandomByteLMIC() {
-  uint8_t x = 0;
+  uint8_t x = 0, b;
   for (uint8_t j = 0; j < 8; j++) {
-    uint8_t b;
-    while((b = readRegister(RegRssiWideband) & 0x01) == (readRegister(RegRssiWideband) & 0x01));
+    b = readRegister(RegRssiWideband) & 0b00000001;
+    while (b == readRegister(RegRssiWideband) & 0b00000001) {
+      // von Neumann extractor.
+      b = readRegister(RegRssiWideband) & 0b00000001;
+    }
     x = (x << 1) | b;
+    //delay(1);
   }
   return x;
 }
@@ -79,15 +83,6 @@ void fillRandom(unsigned char *x, size_t len) {
   size_t i;
   for (i = 0; i < len; i++) {
     x[i] = getLoRandomByte();
-  }
-  resetLoRa();
-}
-
-void fillRandomLMIC(unsigned char *x, size_t len) {
-  setupLoRandom();
-  size_t i;
-  for (i = 0; i < len; i++) {
-    x[i] = getLoRandomByteLMIC();
   }
   resetLoRa();
 }
@@ -127,7 +122,7 @@ void hexDump(unsigned char *buf, uint16_t len) {
   for (uint16_t i = 0; i < len; i += 16) {
     if (i % 128 == 0)
       Serial.print(F("   +------------------------------------------------+ +----------------+\n"));
-    char s[]="|                                                | |................|\n";
+    char s[]="|                                                | |                |\n";
     uint8_t ix = 1, iy = 52;
     for (uint8_t j = 0; j < 16; j++) {
       if (i + j < len) {
@@ -136,6 +131,7 @@ void hexDump(unsigned char *buf, uint16_t len) {
         s[ix++] = alphabet[c & 0x0F];
         ix++;
         if (c > 31 && c < 128) s[iy++] = c;
+        else s[iy++] = '.';
       }
     }
     uint8_t index = i / 16;
