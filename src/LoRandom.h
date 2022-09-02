@@ -23,31 +23,49 @@ void writeRegister(uint8_t reg, uint8_t value);
 uint8_t readRegister(uint8_t reg);
 // Provide your own functions, which will depend on your library
 
+uint8_t modemconf0;
 uint8_t modemconf1;
 uint8_t modemconf2;
 
 void setupLoRandom() {
+  // First save current settings
+  modemconf0 = readRegister(RegOpMode);
+  delay(10);
   modemconf1 = readRegister(RegModemConfig1);
-  delay(100);
+  delay(10);
   modemconf2 = readRegister(RegModemConfig2);
-  delay(100);
+  delay(10);
+
+  // 1: LoRa mode
+  // 0: Access LoRa registers page 0x0D: 0x3F
+  // 00: reserved
+  // 1: Low Frequency Mode (access to LF test registers)
+  // 101: Receive continuous (RXCONTINUOUS)
   writeRegister(RegOpMode, 0b10001101);
-  delay(100);
-  // MODE_LONG_RANGE_MODE 0b1xxxxxxx || LowFrequencyModeOn 0bxxxx1xxx || MODE_RX_CONTINUOUS 0bxxxxx101
+  delay(10);
+
+  // 0111: BW 125
+  // 001: CR 4/5
+  // 0: Explicit Header mode
   writeRegister(RegModemConfig1, 0b01110010);
-  delay(100);
-  writeRegister(RegModemConfig2, 0b01110000);
-  delay(100);
+  delay(10);
+  
+  // 0110: SF 6
+  // 1: continuous mode, send multiple packets across the FIFO
+  // 0: disable CRC check on payload
+  // 00: RX Time-Out MSB
+  writeRegister(RegModemConfig2, 0b01101000);
+  delay(10);
 }
 
 void resetLoRa() {
-  writeRegister(RegOpMode, 0b10000001);
-  delay(100);
-  // MODE_LONG_RANGE_MODE 0b1xxxxxxx || MODE_STDBY 0bxxxxxxx1
+  // reset settings
+  writeRegister(RegOpMode, modemconf0);
+  delay(10);
   writeRegister(RegModemConfig1, modemconf1);
-  delay(100);
+  delay(10);
   writeRegister(RegModemConfig2, modemconf2);
-  delay(100);
+  delay(10);
 }
 
 uint8_t getLoRandomByte() {
