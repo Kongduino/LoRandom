@@ -1,3 +1,8 @@
+#ifndef LORANDOM_H
+#define LORANDOM_H
+
+#include <Arduino.h>
+
 /*
   SX1276 Register (address)     Register bit field (bit #)      Values    Note
   RegOpMode (0x01)              LongRangeMode[7]                ‘1’       LoRa mode enable
@@ -23,25 +28,31 @@ void writeRegister(uint8_t reg, uint8_t value);
 uint8_t readRegister(uint8_t reg);
 // Provide your own functions, which will depend on your library
 
-uint8_t modemconf0;
-uint8_t modemconf1;
-uint8_t modemconf2;
+// Everything below is static inline, so this header can be included from several source files
+// without duplicate definitions at link time.
 
-void setupLoRandom() {
+// Settings saved by setupLoRandom() and restored by resetLoRa().
+static inline uint8_t *loRandomSavedSettings() {
+  static uint8_t saved[3];
+  return saved;
+}
+
+static inline void setupLoRandom() {
   // First save current settings
-  modemconf0 = readRegister(RegOpMode);
+  uint8_t *saved = loRandomSavedSettings();
+  saved[0] = readRegister(RegOpMode);
   delay(10);
-  modemconf1 = readRegister(RegModemConfig1);
+  saved[1] = readRegister(RegModemConfig1);
   delay(10);
-  modemconf2 = readRegister(RegModemConfig2);
+  saved[2] = readRegister(RegModemConfig2);
   delay(10);
 
   // 1: LoRa mode
   // 0: Access LoRa registers page 0x0D: 0x3F
   // 00: reserved
-  // 1: Low Frequency Mode (access to LF test registers)
+  // x: Low Frequency Mode, kept as the radio library set it (on for 433 MHz, off for 868/915 MHz)
   // 101: Receive continuous (RXCONTINUOUS)
-  writeRegister(RegOpMode, 0b10001101);
+  writeRegister(RegOpMode, 0b10000101 | (saved[0] & 0b00001000));
   delay(10);
 
   // 0111: BW 125
@@ -50,30 +61,31 @@ void setupLoRandom() {
   writeRegister(RegModemConfig1, 0b01110010);
   delay(10);
   
-  // 0110: SF 6
+  // 0111: SF 7, as in the table above (SF 6 would also need implicit header mode)
   // 1: continuous mode, send multiple packets across the FIFO
   // 0: disable CRC check on payload
   // 00: RX Time-Out MSB
-  writeRegister(RegModemConfig2, 0b01101000);
+  writeRegister(RegModemConfig2, 0b01111000);
   delay(10);
 }
 
-void resetLoRa() {
+static inline void resetLoRa() {
   // reset settings
-  writeRegister(RegOpMode, modemconf0);
+  uint8_t *saved = loRandomSavedSettings();
+  writeRegister(RegOpMode, saved[0]);
   delay(10);
-  writeRegister(RegModemConfig1, modemconf1);
+  writeRegister(RegModemConfig1, saved[1]);
   delay(10);
-  writeRegister(RegModemConfig2, modemconf2);
+  writeRegister(RegModemConfig2, saved[2]);
   delay(10);
 }
 
-uint8_t getLoRandomByte() {
+static inline uint8_t getLoRandomByte() {
   uint8_t x = 0, b;
   for (uint8_t j = 0; j < 8; j++) {
     b = readRegister(RegRssiWideband) & 0b00000001;
-    while (b == readRegister(RegRssiWideband) & 0b00000001) {
-      // von Neumann extractor.
+    while (b == (readRegister(RegRssiWideband) & 0b00000001)) {
+      // von Neumann extractor: a pair of equal bits is discarded.
       b = readRegister(RegRssiWideband) & 0b00000001;
     }
     x = (x << 1) | b;
@@ -82,21 +94,22 @@ uint8_t getLoRandomByte() {
   return x;
 }
 
-void fillRandomMultiple(unsigned char *x, size_t len, uint8_t multiple) {
+static inline void fillRandomMultiple(unsigned char *x, size_t len, uint8_t multiple) {
   // Fill up a buffer with multiple instances of the same random byte.
   // Yes, I have a specific use for this.
+  if (multiple == 0) multiple = 1;
   setupLoRandom();
   size_t i;
   for (i = 0; i < len; i += multiple) {
     uint8_t rng =  getLoRandomByte();
-    for (uint8_t j = 0; j < multiple; j++) {
+    for (uint8_t j = 0; j < multiple && i + j < len; j++) {
       x[i + j] = rng;
     }
   }
   resetLoRa();
 }
 
-void fillRandom(unsigned char *x, size_t len) {
+static inline void fillRandom(unsigned char *x, size_t len) {
   setupLoRandom();
   size_t i;
   for (i = 0; i < len; i++) {
@@ -105,7 +118,7 @@ void fillRandom(unsigned char *x, size_t len) {
   resetLoRa();
 }
 
-void fillRandom(unsigned char *x, size_t len, uint8_t except) {
+static inline void fillRandom(unsigned char *x, size_t len, uint8_t except) {
   // used, for instance, when you want a non-zero value.
   // fillRandom(UUID, 16, 0);
   // get a UUID with 16 bytes, all non-zero
@@ -119,7 +132,7 @@ void fillRandom(unsigned char *x, size_t len, uint8_t except) {
   resetLoRa();
 }
 
-void fillRandom(unsigned char *x, size_t len, uint8_t minValue, uint8_t maxValue) {
+static inline void fillRandom(unsigned char *x, size_t len, uint8_t minValue, uint8_t maxValue) {
   // used, for instance, when you want a value within a specified range.
   // fillRandom(x, 16, 0, 15);
   // get a bank of random numbers, between 0 and 15.
@@ -133,7 +146,7 @@ void fillRandom(unsigned char *x, size_t len, uint8_t minValue, uint8_t maxValue
   resetLoRa();
 }
 
-void hexDump(unsigned char *buf, uint16_t len) {
+static inline void hexDump(unsigned char *buf, uint16_t len) {
   char alphabet[17]="0123456789abcdef";
   Serial.print(F("   +------------------------------------------------+ +----------------+\n"));
   Serial.print(F("   |.0 .1 .2 .3 .4 .5 .6 .7 .8 .9 .a .b .c .d .e .f | |      ASCII     |\n"));
@@ -159,3 +172,5 @@ void hexDump(unsigned char *buf, uint16_t len) {
   }
   Serial.print(F("   +------------------------------------------------+ +----------------+\n"));
 }
+
+#endif // LORANDOM_H
