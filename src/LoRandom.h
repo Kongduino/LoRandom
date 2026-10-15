@@ -4,6 +4,8 @@
 #include <Arduino.h>
 
 /*
+  Semtech AN1200.24 "SX1276 Settings for LoRaWAN", chapter 4: Random Number Generation for Cryptography.
+
   SX1276 Register (address)     Register bit field (bit #)      Values    Note
   RegOpMode (0x01)              LongRangeMode[7]                ‘1’       LoRa mode enable
                                 Mode[2:0]                       ‘101’     Receive Continuous mode
@@ -17,6 +19,8 @@
   To generate an N bit random number, perform N read operation of the register RegRssiWideband (address 0x2c)
   and use the LSB of the fetched value. The value from RegRssiWideband is derived from a wideband (4MHz) signal strength
   at the receiver input and the LSB of this value constantly and randomly changes.
+  The RegRssiValue register (at address 0x1b) should not be used for random number generation: with a constant CW
+  input inside the receiver channel, its LSB may be constant or strongly biased.
 */
 
 #define RegOpMode 0x01
@@ -61,11 +65,11 @@ static inline void setupLoRandom() {
   writeRegister(RegModemConfig1, 0b01110010);
   delay(10);
   
-  // 0111: SF 7, as in the table above (SF 6 would also need implicit header mode)
-  // 1: continuous mode, send multiple packets across the FIFO
+  // 0111: SF 7, as in the table above (Semtech AN1200.24, chapter 4)
+  // 0: TxContinuousMode off (a transmit setting, not part of the procedure)
   // 0: disable CRC check on payload
   // 00: RX Time-Out MSB
-  writeRegister(RegModemConfig2, 0b01111000);
+  writeRegister(RegModemConfig2, 0b01110000);
   delay(10);
 }
 
