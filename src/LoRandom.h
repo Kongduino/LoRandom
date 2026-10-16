@@ -150,6 +150,9 @@ static inline void fillRandom(unsigned char *x, size_t len, uint8_t minValue, ui
   resetLoRa();
 }
 
+#ifndef KONGDUINO_HEXDUMP
+#define KONGDUINO_HEXDUMP
+// Shared with Sx1262LoRandom: whichever header comes first defines it.
 static inline void hexDump(unsigned char *buf, uint16_t len) {
   char alphabet[17]="0123456789abcdef";
   Serial.print(F("   +------------------------------------------------+ +----------------+\n"));
@@ -176,5 +179,6 @@ static inline void hexDump(unsigned char *buf, uint16_t len) {
   }
   Serial.print(F("   +------------------------------------------------+ +----------------+\n"));
 }
+#endif // KONGDUINO_HEXDUMP
 
 #endif // LORANDOM_H
